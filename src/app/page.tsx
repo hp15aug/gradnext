@@ -1,96 +1,7 @@
 import { fetchDashboardData } from "@/app/actions/sheets";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-
-// ─── Metadata ────────────────────────────────────────────────────────────────
-export const metadata = {
-  title: "Data Verification — Intern Assessment",
-  description:
-    "Phase 1: Google Sheets data pipeline verification for the Web Developer Intern Assessment.",
-};
-
+import { DashboardView } from "@/components/DashboardView";
 // ─── Sub-components ──────────────────────────────────────────────────────────
-
-function SheetTable({
-  title,
-  badge,
-  headers,
-  rows,
-}: {
-  title: string;
-  badge: string;
-  headers: string[];
-  rows: Record<string, string>[];
-}) {
-  if (headers.length === 0) {
-    return (
-      <section className="rounded-xl border border-border bg-card p-6">
-        <div className="mb-4 flex items-center gap-3">
-          <h2 className="text-base font-semibold text-foreground">{title}</h2>
-          <Badge variant="secondary">{badge}</Badge>
-        </div>
-        <p className="text-sm text-muted-foreground">No data found in this sheet.</p>
-      </section>
-    );
-  }
-
-  return (
-    <section className="rounded-xl border border-border bg-card overflow-hidden">
-      <div className="flex items-center gap-3 border-b border-border px-6 py-4">
-        <h2 className="text-base font-semibold text-foreground">{title}</h2>
-        <Badge variant="secondary">{badge}</Badge>
-        <span className="ml-auto text-xs text-muted-foreground">
-          {rows.length} row{rows.length !== 1 ? "s" : ""} · {headers.length} column{headers.length !== 1 ? "s" : ""}
-        </span>
-      </div>
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            {headers.map((header) => (
-              <TableHead
-                key={header}
-                className="bg-muted/50 text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
-                {header}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.length === 0 ? (
-            <TableRow>
-              <TableCell
-                colSpan={headers.length}
-                className="py-10 text-center text-sm text-muted-foreground"
-              >
-                No data rows found.
-              </TableCell>
-            </TableRow>
-          ) : (
-            rows.map((row, rowIdx) => (
-              <TableRow key={rowIdx}>
-                {headers.map((header) => (
-                  <TableCell key={header} className="text-sm text-foreground">
-                    {row[header] || (
-                      <span className="text-muted-foreground/50">—</span>
-                    )}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </section>
-  );
-}
 
 function ErrorState({ message }: { message: string }) {
   return (
@@ -178,31 +89,18 @@ export default async function Home() {
         {/* Hero section */}
         <div className="space-y-1">
           <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-            Google Sheets Verification
+            Analytics Dashboard
           </h2>
           <p className="text-sm text-muted-foreground">
-            Server-side data fetched via Service Account · Both sheets rendered below
+            Manage your Google Sheets data and upload local files seamlessly.
           </p>
         </div>
 
-        {/* Error or data */}
+        {/* Error or Dashboard */}
         {!result.success ? (
           <ErrorState message={result.error} />
         ) : (
-          <div className="space-y-6">
-            <SheetTable
-              title="Sheet 1"
-              badge={`${result.data.sheet1.length} rows`}
-              headers={result.data.sheet1Headers}
-              rows={result.data.sheet1}
-            />
-            <SheetTable
-              title="Sheet 2"
-              badge={`${result.data.sheet2.length} rows`}
-              headers={result.data.sheet2Headers}
-              rows={result.data.sheet2}
-            />
-          </div>
+          <DashboardView initialGoogleSheetsData={result.data} />
         )}
 
         {/* Footer note */}
