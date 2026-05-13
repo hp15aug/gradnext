@@ -7,12 +7,36 @@ import * as XLSX from "xlsx";
 import { UploadCloud, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { normalizeData } from "@/lib/data-processor";
 import { useDataStore } from "@/store/useDataStore";
 
 export function FileUploader() {
   const [error, setError] = useState<string | null>(null);
   const addUploadedData = useDataStore((state) => state.addUploadedData);
+
+  const handleNormalization = (rawData: any[], fileName: string) => {
+    const { validData, duplicatesCount, errors } = normalizeData(rawData, fileName);
+    
+    if (validData.length > 0) {
+      addUploadedData(validData);
+      toast.success(`Successfully uploaded ${fileName}`, {
+        description: `Added ${validData.length} records.`,
+      });
+    }
+
+    if (duplicatesCount > 0) {
+      toast.warning("Duplicate Data Detected", {
+        description: `Skipped ${duplicatesCount} duplicate rows in ${fileName}.`,
+      });
+    }
+
+    if (errors.length > 0 && validData.length === 0) {
+      toast.error("File Processing Error", {
+        description: "No valid data found. Missing critical columns.",
+      });
+    }
+  };
 
   const processFile = (file: File) => {
     setError(null);
@@ -23,10 +47,12 @@ export function FileUploader() {
         header: true,
         skipEmptyLines: true,
         complete: (results) => {
-          const normalized = normalizeData(results.data, file.name);
-          addUploadedData(normalized);
+          handleNormalization(results.data, file.name);
         },
-        error: (err: any) => setError(`CSV Parse Error: ${err.message}`),
+        error: (err: any) => {
+          setError(`CSV Parse Error: ${err.message}`);
+          toast.error(`Failed to parse ${file.name}`);
+        },
       });
     } else if (extension === "xlsx" || extension === "xls") {
       const reader = new FileReader();
@@ -37,20 +63,24 @@ export function FileUploader() {
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
           const json = XLSX.utils.sheet_to_json(worksheet);
-          const normalized = normalizeData(json, file.name);
-          addUploadedData(normalized);
+          handleNormalization(json, file.name);
         } catch (err) {
           setError(
             `Excel Parse Error: ${
               err instanceof Error ? err.message : "Unknown error"
             }`
           );
+          toast.error(`Failed to read ${file.name}`);
         }
       };
-      reader.onerror = () => setError("Failed to read file.");
+      reader.onerror = () => {
+        setError("Failed to read file.");
+        toast.error(`Failed to read ${file.name}`);
+      };
       reader.readAsArrayBuffer(file);
     } else {
       setError("Unsupported file format. Please upload CSV or XLSX.");
+      toast.error("Unsupported file format.");
     }
   };
 

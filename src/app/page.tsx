@@ -1,6 +1,7 @@
 import { fetchDashboardData } from "@/app/actions/sheets";
 import { Badge } from "@/components/ui/badge";
 import { DashboardView } from "@/components/DashboardView";
+import { ThemeToggle } from "@/components/ThemeToggle";
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function ErrorState({ message }: { message: string }) {
@@ -75,12 +76,15 @@ export default async function Home() {
               </h1>
             </div>
           </div>
-          <Badge
-            variant={result.success ? "default" : "destructive"}
-            className="text-xs"
-          >
-            {result.success ? "✓ Connected" : "✗ Error"}
-          </Badge>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <Badge
+              variant={result.success ? "default" : "destructive"}
+              className="text-xs"
+            >
+              {result.success ? "✓ Connected" : "✗ Error"}
+            </Badge>
+          </div>
         </div>
       </header>
 

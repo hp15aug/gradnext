@@ -1,10 +1,15 @@
 "use client";
+import { toast } from "sonner";
 
 import { useEffect, useRef } from "react";
 import { useDataStore } from "@/store/useDataStore";
 import type { SheetData } from "@/lib/google-sheets";
 import { normalizeData } from "@/lib/data-processor";
 import { FileUploader } from "@/components/FileUploader";
+import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
+import { KPICards } from "@/components/dashboard/KPICards";
+import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
+import { DataTable } from "@/components/dashboard/DataTable";
 import {
   Table,
   TableBody,
@@ -112,20 +117,32 @@ export function DashboardView({
   const mergedData = useDataStore((state) => state.mergedData);
   const initialized = useRef(false);
 
+
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
 
-    // Normalize both sheets and combine them
-    const normalizedSheet1 = normalizeData(
-      initialGoogleSheetsData.sheet1,
-      "Google Sheets - Sheet 1"
-    );
-    const normalizedSheet2 = normalizeData(
-      initialGoogleSheetsData.sheet2,
-      "Google Sheets - Sheet 2"
-    );
-    setGoogleSheetsData([...normalizedSheet1, ...normalizedSheet2]);
+    try {
+      // Normalize both sheets and combine them
+      const result1 = normalizeData(
+        initialGoogleSheetsData.sheet1,
+        "Google Sheets - Sheet 1"
+      );
+      const result2 = normalizeData(
+        initialGoogleSheetsData.sheet2,
+        "Google Sheets - Sheet 2"
+      );
+      setGoogleSheetsData([...result1.validData, ...result2.validData]);
+
+      // Optional: We can show a toast if the initial data had duplicates, but maybe it's too noisy for Google Sheets.
+      if (result1.duplicatesCount > 0 || result2.duplicatesCount > 0) {
+        toast.info("Google Sheets Synced", {
+          description: `Skipped ${result1.duplicatesCount + result2.duplicatesCount} duplicate rows from source.`,
+        });
+      }
+    } catch (err) {
+      toast.error("Failed to parse Google Sheets Data");
+    }
   }, [initialGoogleSheetsData, setGoogleSheetsData]);
 
   return (
@@ -150,84 +167,25 @@ export function DashboardView({
       </div>
 
       <TabsContent value="unified" className="space-y-8 mt-0 focus-visible:outline-none">
-        {/* Uploader Section */}
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground tracking-tight">
-            Add Local Data
-          </h2>
-          <FileUploader />
-        </section>
-
-        {/* Unified Table Section */}
-        <section className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="flex items-center gap-3 border-b border-border px-6 py-4 bg-muted/20">
-            <h2 className="text-base font-semibold text-foreground">
-              Unified Dataset
+        <div className="flex flex-col space-y-8">
+          <DashboardFilters />
+          <KPICards />
+          <DashboardCharts />
+          
+          <section className="space-y-4 mt-8 pt-8 border-t border-border">
+            <h2 className="text-xl font-semibold text-foreground tracking-tight">
+              Unified Data
             </h2>
-            <Badge variant="secondary" className="font-mono text-xs">
-              {mergedData.length} Records
-            </Badge>
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[200px] bg-muted/50 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Source
-                </TableHead>
-                <TableHead className="bg-muted/50 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Date
-                </TableHead>
-                <TableHead className="bg-muted/50 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Category
-                </TableHead>
-                <TableHead className="text-right bg-muted/50 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Value
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {mergedData.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="py-10 text-center text-sm text-muted-foreground"
-                  >
-                    No data available.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                mergedData.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          row.source.includes("Google Sheets")
-                            ? "outline"
-                            : "default"
-                        }
-                        className="text-[10px] uppercase font-semibold"
-                      >
-                        {row.source}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm font-medium">
-                      {row.date || "—"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {row.category || "—"}
-                    </TableCell>
-                    <TableCell className="text-sm text-right font-medium">
-                      {row.value.toLocaleString("en-US", {
-                        style: "currency",
-                        currency: "USD",
-                      }).replace("$", "")}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </section>
+            <DataTable />
+          </section>
+
+          <section className="space-y-4 mt-8 pt-8 border-t border-border">
+            <h2 className="text-xl font-semibold text-foreground tracking-tight">
+              Add Local Data
+            </h2>
+            <FileUploader />
+          </section>
+        </div>
       </TabsContent>
 
       <TabsContent value="raw" className="space-y-6 mt-0 focus-visible:outline-none">
