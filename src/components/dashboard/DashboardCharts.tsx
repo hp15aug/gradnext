@@ -22,6 +22,8 @@ import { format } from "date-fns";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
+import { EmptyState } from "@/components/ui/EmptyState";
+
 export function DashboardCharts() {
   const filteredData = useFilteredData();
 
@@ -70,8 +72,12 @@ export function DashboardCharts() {
       .sort((a, b) => b.value - a.value);
   }, [filteredData]);
 
+  if (filteredData.length === 0) {
+    return <EmptyState message="Adjust your filters or upload more data to see visualizations." />;
+  }
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+    <div className="grid gap-6 lg:gap-8 md:grid-cols-2 lg:grid-cols-2">
       <Card className="col-span-1 md:col-span-2 lg:col-span-2">
         <CardHeader>
           <CardTitle className="text-sm font-medium text-muted-foreground">Value Trend over Time</CardTitle>

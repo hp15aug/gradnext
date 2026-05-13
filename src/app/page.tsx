@@ -2,6 +2,9 @@ import { fetchDashboardData } from "@/app/actions/sheets";
 import { Badge } from "@/components/ui/badge";
 import { DashboardView } from "@/components/DashboardView";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { RefreshButton } from "@/components/RefreshButton";
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "lucide-react";
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function ErrorState({ message }: { message: string }) {
@@ -49,7 +52,7 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
+      <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground">
@@ -75,15 +78,25 @@ export default async function Home() {
                 Data Pipeline
               </h1>
             </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <ThemeToggle />
             <Badge
               variant={result.success ? "default" : "destructive"}
-              className="text-xs"
+              className="text-[10px] ml-2"
             >
               {result.success ? "✓ Connected" : "✗ Error"}
             </Badge>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <a 
+              href="https://docs.google.com/spreadsheets/d/1d1M8VCTeBwXTKn7LA0HORkkJr8qUvrnzRIPnHKftrZ8/edit" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hidden sm:flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-card shadow-sm hover:bg-card/90 hover:text-accent-foreground h-8 px-3"
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              View Source
+            </a>
+            <RefreshButton />
+            <ThemeToggle />
           </div>
         </div>
       </header>

@@ -1,5 +1,8 @@
 "use client";
 import { toast } from "sonner";
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
 
 import { useEffect, useRef } from "react";
 import { useDataStore } from "@/store/useDataStore";
@@ -106,6 +109,7 @@ function RawSheetTable({
   );
 }
 
+
 export function DashboardView({
   initialGoogleSheetsData,
 }: {
@@ -116,7 +120,7 @@ export function DashboardView({
   );
   const mergedData = useDataStore((state) => state.mergedData);
   const initialized = useRef(false);
-
+  const [isAppLoading, setIsAppLoading] = useState(true);
 
   useEffect(() => {
     if (initialized.current) return;
@@ -134,6 +138,9 @@ export function DashboardView({
       );
       setGoogleSheetsData([...result1.validData, ...result2.validData]);
 
+      // Wait a moment so the user sees the nice loading screen
+      setTimeout(() => setIsAppLoading(false), 800);
+
       // Optional: We can show a toast if the initial data had duplicates, but maybe it's too noisy for Google Sheets.
       if (result1.duplicatesCount > 0 || result2.duplicatesCount > 0) {
         toast.info("Google Sheets Synced", {
@@ -142,11 +149,23 @@ export function DashboardView({
       }
     } catch (err) {
       toast.error("Failed to parse Google Sheets Data");
+      setIsAppLoading(false);
     }
   }, [initialGoogleSheetsData, setGoogleSheetsData]);
 
   return (
-    <Tabs defaultValue="unified" className="w-full space-y-8">
+    <>
+      <AnimatePresence>
+        {isAppLoading && <LoadingScreen />}
+      </AnimatePresence>
+
+      {!isAppLoading && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Tabs defaultValue="unified" className="w-full space-y-8">
       <div className="flex items-center justify-between">
         <TabsList className="bg-muted/50 p-1">
           <TabsTrigger
@@ -212,5 +231,8 @@ export function DashboardView({
         />
       </TabsContent>
     </Tabs>
+        </motion.div>
+      )}
+    </>
   );
 }
